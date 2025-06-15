@@ -1,5 +1,27 @@
 pipeline {
-    agent any
+        agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: main-agent-container
+    image: gcr.io/your-gcp-project-id/jenkins-custom-agent:latest # <--- GUNAKAN INI
+    command: ["sleep"]
+    args: ["9999999"]
+    securityContext:
+      runAsUser: 0 # Umumnya aman untuk kontainer agent
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "512m"
+      limits:
+        memory: "3Gi"
+        cpu: "1000m"
+'''
+        }
+    }
 
     environment {
         PROJECT_ID = 'dots-production-farhan01'
