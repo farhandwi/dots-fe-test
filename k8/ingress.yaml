@@ -1,0 +1,42 @@
+# k8s/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dots-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: appsdev-test.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sso-frontend-service
+            port:
+              number: 80
+      - path: /tkyc(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: sso-backend-service
+            port:
+              number: 80
+      - path: /dots(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: dots-frontend-nodejs-service
+            port:
+              number: 80
+      - path: /dots-be(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: dots-backend-service
+            port:
+              number: 80

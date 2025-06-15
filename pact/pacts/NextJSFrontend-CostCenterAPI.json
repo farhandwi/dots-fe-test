@@ -1,0 +1,49 @@
+{
+  "consumer": {
+    "name": "NextJSFrontend"
+  },
+  "interactions": [
+    {
+      "description": "a GET request for cost center approval with bp=BP001",
+      "providerState": "cost center approval exists for BP001",
+      "request": {
+        "method": "GET",
+        "path": "/tkyc/api/cost-center-approval/BP001"
+      },
+      "response": {
+        "body": {
+          "cost_center_approval": {
+            "approval1": "APP001",
+            "approval2": "APP002",
+            "approval3": null,
+            "approval4": null,
+            "approval5": null,
+            "bp": "BP001",
+            "cost_center": "CC001",
+            "email": "user@example.com",
+            "name": "John Doe"
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "15.0.1"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  },
+  "provider": {
+    "name": "CostCenterAPI"
+  }
+}

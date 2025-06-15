@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dots-frontend
+  labels:
+    app: dots-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dots-frontend
+  template:
+    metadata:
+      labels:
+        app: dots-frontend
+    spec:
+      containers:
+      - name: dots-frontend
+        image: asia-southeast2-docker.pkg.dev/dots-production/dots-images/dots-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://appsdev.com/dots-be"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

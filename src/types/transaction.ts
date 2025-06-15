@@ -1,0 +1,58 @@
+// types/transaction.ts
+
+export interface Transaction {
+    BUKRS: string;
+    dots_number: string;
+    dots_no_hash: string;
+    purch_org: string;
+    purch_group: string;
+    memo: string | null;
+    memo_link: string | null;
+    category: string;
+    form_type: string;
+    trx_type: string;
+    bpid: string;
+    employee_name: string;
+    employee_nip: string;
+    division: string | null;
+    cost_center_bp: string;
+    cost_center_verificator: string;
+    cost_center_inputter: string;
+    client_bpid: string | null;
+    client_name: string | null;
+    destination: string | null;
+    event: string | null;
+    purpose: string;
+    address: string | null;
+    start_date: string;
+    end_date: string;
+    invoice_number: string | null;
+    pol_number: string | null;
+    curr_id: string | null;
+    total_proposed_amt: number | null;
+    total_realization_amt: number | null;
+    total_diff_amt: number | null;
+    payment_type: string;
+    estimate_payment_due_date: string | null;
+    employee_bank_name: string;
+    employee_acct_bank_number: string;
+    employee_acct_bank_name: string;
+    employee_cash_card: string | null;
+    employee_email: string;
+    employee_acct_swift_code: string | null;
+    employee_acct_iban: string | null;
+    remark_payment: string | null;
+    sap_dp_request_no: string | null;
+    sap_dp_request_year: string | null;
+    sap_po_doc_no: string | null;
+    sap_po_doc_year: string | null;
+    sap_acc_doc_no: string | null;
+    sap_acc_doc_year: string | null;
+    sap_invoice_number: string | null;
+    sap_invoice_year: string | null;
+    status: string;
+    created_by: string;
+    created_date: string;
+    modified_by: string;
+    modified_date: string;
+}
