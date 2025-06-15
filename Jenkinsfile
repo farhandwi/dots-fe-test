@@ -7,7 +7,7 @@ kind: Pod
 spec:
   containers:
   - name: main-agent-container
-    image: gcr.io/your-gcp-project-id/jenkins-custom-agent:latest # <--- GUNAKAN INI
+    image: gcr.io/dots-production-farhan01/jenkins-custom-agent:latest
     command: ["sleep"]
     args: ["9999999"]
     securityContext:
