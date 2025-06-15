@@ -431,14 +431,14 @@ spec:
                                     kubectl get pods -n default -l app=dots-fe-test -o wide
 
                                     echo "Service status:"
-                                    kubectl get service dots-fe-test-service -n default
+                                    kubectl get service dots-fe-test -n default
 
                                     echo "Waiting for pods to be ready..."
                                     sleep 30
 
                                     echo "Testing health check endpoint..."
                                     kubectl run test-health-${BUILD_NUMBER} --image=curlimages/curl:latest --rm -i --restart=Never --timeout=60s -- \
-                                      curl -f http://dots-fe-test-service.default.svc.cluster.local:3000/api/health || echo "Health check failed, but continuing..."
+                                      curl -f http://dots-fe-test.default.svc.cluster.local:3000/api/health || echo "Health check failed, but continuing..."
 
                                     echo "Recent events:"
                                     kubectl get events -n default --sort-by='.lastTimestamp' --field-selector involvedObject.name=dots-fe-test | head -10
