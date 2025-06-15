@@ -1,5 +1,5 @@
 pipeline {
-        agent {
+    agent {
         kubernetes {
             yaml '''
 apiVersion: v1
@@ -11,7 +11,7 @@ spec:
     command: ["sleep"]
     args: ["9999999"]
     securityContext:
-      runAsUser: 0 # Umumnya aman untuk kontainer agent
+      runAsUser: 0 
     resources:
       requests:
         memory: "1Gi"
@@ -19,6 +19,13 @@ spec:
       limits:
         memory: "3Gi"
         cpu: "1000m"
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
 '''
         }
     }
