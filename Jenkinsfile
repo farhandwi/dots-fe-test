@@ -1,6 +1,4 @@
 pipeline {
-    // Menggunakan 'agent any' di tingkat pipeline berarti
-    // seluruh pipeline akan dijalankan pada satu agent yang tersedia.
     agent any
 
     environment {
