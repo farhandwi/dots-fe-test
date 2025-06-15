@@ -370,7 +370,7 @@ spec:
                                     kubectl get deployment dots-fe-test -n default || echo "Deployment not found - will be created"
 
                                     echo "Checking service..."
-                                    kubectl get service dots-fe-test-service -n default || echo "Service not found"
+                                    kubectl get service dots-fe-test -n default || echo "Service not found"
                                 '''
 
                             } catch (Exception e) {
