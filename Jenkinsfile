@@ -17,7 +17,7 @@ spec:
         memory: "1Gi"
         cpu: "512m"
       limits:
-        memory: "3Gi"
+        memory: "2Gi"
         cpu: "1000m"
     volumeMounts:
     - name: docker-sock
