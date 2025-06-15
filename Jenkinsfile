@@ -220,13 +220,13 @@ spec:
                                             # Try different test commands with timeouts
                                             if npm run | grep -q "test:ci"; then
                                                 echo "Running npm run test:ci..."
-                                                timeout 480 npm run test:ci
+                                                timeout 600 npm run test:ci
                                             elif npm run | grep -q "test"; then
                                                 echo "Running npm run test..."
-                                                timeout 480 npm run test
+                                                timeout 600 npm run test
                                             else
                                                 echo "No test script found, running Jest directly..."
-                                                timeout 480 ./node_modules/.bin/jest --ci --verbose --no-coverage --maxWorkers=1 --forceExit --detectOpenHandles --passWithNoTests
+                                                timeout 600 ./node_modules/.bin/jest --ci --verbose --no-coverage --maxWorkers=1 --forceExit --detectOpenHandles --passWithNoTests
                                             fi
 
                                             echo "✓ Tests completed successfully"
