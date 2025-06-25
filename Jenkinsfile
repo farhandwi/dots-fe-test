@@ -12,13 +12,6 @@ spec:
     args: ["9999999"]
     securityContext:
       runAsUser: 0 # Running as root since your image is configured for it
-    resources:
-      requests:
-        memory: "1Gi"
-        cpu: "512m"
-      limits:
-        memory: "4Gi"
-        cpu: "2000m"
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
