@@ -13,8 +13,9 @@ RUN adduser --system --uid 1001 nextjs
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci --frozen-lockfile
+# Install dependencies with memory optimization
+RUN npm ci --frozen-lockfile --production=false && \
+    npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -22,14 +23,20 @@ COPY . .
 # Copy environment variables
 COPY .env.example .env
 
-# Set environment variables
+# Set environment variables with memory limits
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Build the application
-RUN npm run build
+# Build the application with memory optimization
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+
+# Remove dev dependencies after build
+RUN npm prune --production && \
+    npm cache clean --force && \
+    rm -rf .next/cache
 
 # Change ownership of app files to nextjs user
 RUN chown -R nextjs:nodejs /app
