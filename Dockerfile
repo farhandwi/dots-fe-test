@@ -27,11 +27,23 @@ ENV HOSTNAME="0.0.0.0"
 # Build aplikasi Next.js
 RUN npm run build
 
-# Gunakan user non-root
+
+# Copy package.json for dependencies info
+COPY --from=builder /app/package.json ./package.json
+
+# Copy production dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy Next.js build output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Switch to non-root user
 USER nextjs
 
-# Buka port 3000
+# Expose port
 EXPOSE 3000
 
-# Jalankan aplikasi
-CMD ["npm", "start"]
+# Start the application with standalone server
+CMD ["node", "server.js"]
