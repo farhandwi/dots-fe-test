@@ -1,37 +1,50 @@
-FROM node:18-alpine AS base
-
-# Install dependencies
-FROM base AS deps
+# Stage 1: Dependencies
+FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --frozen-lockfile
 
-# Stage 2: Builder - Menggunakan Node.js untuk Build Next.js
+# Copy dependency files
+COPY package.json package-lock.json* ./
+
+# Install production dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production --omit=dev
+
+# Stage 2: Dev Dependencies
+FROM node:18-alpine AS dev-deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy dependency files
+COPY package.json package-lock.json* ./
+
+# Install all dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+# Stage 3: Builder
 FROM node:18-alpine AS builder
 RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
-# Copy dependency files first to leverage Docker cache
-COPY package.json package-lock.json* ./
+# Copy dependencies from dev-deps stage
+COPY --from=dev-deps /app/node_modules ./node_modules
 
-# Install ALL dependencies (including devDependencies) required for building and linting
-RUN npm ci
-
-# Copy the rest of your application code
+# Copy source code
 COPY . .
 
-# Copy environment files
+# Copy env example if needed
 COPY .env.example .env
-COPY next.config.mjs ./
 
+# Set production environment for build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build application
-RUN npm run build
+# Build with cache mount for Next.js
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
+# Stage 4: Runner
 FROM node:18-alpine AS runner
 RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
