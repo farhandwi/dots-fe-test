@@ -12,7 +12,7 @@ const nextConfig = {
   images: {
     domains: [
       'localhost',
-      '34.101.43.103.nip.io',
+      'dots.34.101.230.75.nip.io',
       'jktvmfiles01.tugu.com',
       'api2.tugu.com'
     ],
