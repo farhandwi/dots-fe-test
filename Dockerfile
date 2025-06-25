@@ -1,32 +1,38 @@
 FROM node:18-alpine
 
-# Install dependencies for compatibility and runtime
+# Install system dependencies
 RUN apk add --no-cache libc6-compat curl
 
-# Create and switch to app directory
+# Set working directory
 WORKDIR /app
 
-# Opsional: buat user non-root (seperti di runner stage)
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+# Create user and group
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy dependency files and install all dependencies
+# Copy package files
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
 
-# Copy source code dan env
+# Install dependencies
+RUN npm ci --frozen-lockfile
+
+# Copy source code
 COPY . .
+
+# Copy environment variables
 COPY .env.example .env
 
-# Set environment untuk production
+# Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Build aplikasi Next.js
+# Build the application
 RUN npm run build
 
+# Change ownership of app files to nextjs user
+RUN chown -R nextjs:nodejs /app
 
 # Switch to non-root user
 USER nextjs
@@ -34,5 +40,5 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Start the application with standalone server
-CMD ["node", ".next/standalone/server.js"]
+# Start the application
+CMD ["node", "server.js"]
