@@ -7,46 +7,61 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --frozen-lockfile
 
-# Build the application
-FROM base AS builder
+# Stage 2: Builder - Menggunakan Node.js untuk Build Next.js
+FROM node:18-alpine AS builder
+RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy dependency files first to leverage Docker cache
+COPY package.json package-lock.json* ./
+
+# Install ALL dependencies (including devDependencies) required for building and linting
+RUN npm ci
+
+# Copy the rest of your application code
 COPY . .
 
-# Set build environment
+# Copy environment files
+COPY .env.example .env
+COPY next.config.mjs ./
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Build application
 RUN npm run build
 
-# Production image
-FROM base AS runner
+FROM node:18-alpine AS runner
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
+# Create nodejs user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Copy package.json for dependencies info
+COPY --from=builder /app/package.json ./package.json
 
-# Create user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Copy production dependencies
+COPY --from=deps /app/node_modules ./node_modules
 
-# Copy the standalone output
+# Copy Next.js build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy public files if they exist
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Switch to non-root user
 USER nextjs
 
+# Expose port
 EXPOSE 3000
 
+# Start the application with standalone server
 CMD ["node", "server.js"]
