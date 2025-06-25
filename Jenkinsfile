@@ -256,46 +256,29 @@ spec:
                                 sh '''
                                     echo "=== Authenticating with GCP ==="
                                     gcloud auth activate-service-account --key-file="${GC_KEY}"
-                                    gcloud auth configure-docker ${REGISTRY} --quiet
-                                    echo "GCP authentication successful"
+                                    gcloud config set project ${PROJECT_ID}
+                                    echo "✓ GCP authentication successful"
                                 '''
-
-                                // Get build artifacts verification
-                                sh '''
-                                    echo "Verifying build context..."
-                                    ls -la
-                                    [ -f Dockerfile ] && echo "✓ Dockerfile found" || echo "✗ Dockerfile missing"
-                                    [ -f package.json ] && echo "✓ package.json found" || echo "✗ package.json missing"
-                                    [ -d .next ] && echo "✓ .next directory found" || echo "✗ .next directory missing"
-                                '''
-
+                                
                                 sh """
-                                    echo "=== Building Docker Image with Kaniko ==="
-                                    echo "Image will be tagged as: ${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
-                                    echo "Also tagged as: ${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:latest"
-
-                                    # Use Kaniko to build and push
-                                    kaniko-executor \\
-                                        --context=. \\
-                                        --dockerfile=Dockerfile \\
-                                        --destination=${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG} \\
-                                        --destination=${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:latest \\
-                                        --cache=true \\
-                                        --cache-ttl=24h \\
-                                        --verbosity=info
-
-                                    echo "=== Docker Build and Push Completed Successfully ==="
+                                    echo "=== Building with Google Cloud Build ==="
+                                    gcloud builds submit \\
+                                        --tag ${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG} \\
+                                        --timeout=1200s \\
+                                        .
+                                    
+                                    echo "=== Tagging as latest ==="
+                                    gcloud container images add-tag \\
+                                        ${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG} \\
+                                        ${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:latest
                                 """
-
+                                
                             } catch (Exception e) {
-                                echo "❌ Docker build/push failed: ${e.getMessage()}"
+                                echo "❌ Cloud Build failed: ${e.getMessage()}"
                                 sh '''
-                                    echo "=== Docker Build Debug Info ==="
-                                    ls -la
-                                    echo "Dockerfile content:"
-                                    cat Dockerfile || echo "No Dockerfile found"
-                                    echo "Kaniko version:"
-                                    kaniko-executor version || true
+                                    echo "=== Debug Info ==="
+                                    gcloud auth list
+                                    gcloud config list
                                 '''
                                 throw e
                             }
