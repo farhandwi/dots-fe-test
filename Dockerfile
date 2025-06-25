@@ -28,17 +28,6 @@ ENV HOSTNAME="0.0.0.0"
 RUN npm run build
 
 
-# Copy package.json for dependencies info
-COPY --from=builder /app/package.json ./package.json
-
-# Copy production dependencies
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copy Next.js build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
 # Switch to non-root user
 USER nextjs
 
