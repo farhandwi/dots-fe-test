@@ -1,59 +1,52 @@
-FROM node:18-alpine
+FROM node:18-alpine AS base
 
-# Install system dependencies
-RUN apk add --no-cache libc6-compat curl
-
-# Set working directory
+# Install dependencies
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Create user and group
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy package files
 COPY package.json package-lock.json* ./
+RUN npm ci --frozen-lockfile
 
-# Install dependencies with memory optimization
-RUN npm ci --frozen-lockfile && npm cache clean --force
-
-# Copy source code
+# Build the application
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment variables with memory limits
+# Set build environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Build application
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Build the application with memory optimization
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+# Install curl for health checks
+RUN apk add --no-cache curl
 
-# Remove dev dependencies and clean cache
-RUN npm prune --production && \
-    npm cache clean --force && \
-    rm -rf .next/cache
+# Create user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy the standalone output untuk production
-RUN mkdir -p /app/standalone
-RUN cp -r .next/standalone/* /app/standalone/ || true
-RUN cp -r .next/static /app/standalone/.next/static || true
-RUN cp -r public /app/standalone/public || true
+# Copy the standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Change ownership
-RUN chown -R nextjs:nodejs /app
+# Copy public files if they exist
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Switch to non-root user
 USER nextjs
 
-# Expose port
 EXPOSE 3000
 
-# Start application - cek standalone dulu
-CMD if [ -f "/app/standalone/server.js" ]; then \
-      cd /app/standalone && node server.js; \
-    elif [ -f "/app/.next/standalone/server.js" ]; then \
-      node .next/standalone/server.js; \
-    else \
-      npm start; \
-    fi
+CMD ["node", "server.js"]
