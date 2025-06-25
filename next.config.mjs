@@ -2,8 +2,8 @@
 const nextConfig = {
   // Enable standalone output for Docker
   output: 'standalone',
-  basePath: '/dots',
-  assetPrefix: '/dots',
+  basePath: '/dots-fe-test',
+  assetPrefix: '/dots-fe-test',
   
   // Enable compression
   compress: true,
