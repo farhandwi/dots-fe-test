@@ -1,61 +1,38 @@
-FROM node:18-alpine
-
-# Install system dependencies
-RUN apk add --no-cache libc6-compat curl
-
-# Set working directory
+# Stage 1: Install dependencies
+FROM node:18-alpine AS deps
 WORKDIR /app
-
-# Create user and group
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy package files
 COPY package.json package-lock.json* ./
+RUN npm ci --only=production
 
-# Install dependencies with memory optimization
-RUN npm ci --frozen-lockfile --production=false && \
-    npm cache clean --force
-
-# Copy source code
+# Stage 2: Build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Copy environment variables
 COPY .env.example .env
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
 
-# Set environment variables with memory limits
+# Stage 3: Final runner
+FROM node:18-alpine
+WORKDIR /app
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Build the application with memory optimization
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+# Copy files to final image
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Remove dev dependencies after build
-RUN npm prune --production && \
-    npm cache clean --force && \
-    rm -rf .next/cache
-
-# Change ownership of app files to nextjs user
-RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
 USER nextjs
-
-# Expose port
 EXPOSE 3000
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3000/dots-fe-test/api/health || exit 1
 
-# Start the application - check for different possible entry points
-CMD if [ -f "server.js" ]; then \
-      node server.js; \
-    elif [ -f ".next/standalone/server.js" ]; then \
-      node .next/standalone/server.js; \
-    else \
-      npm start; \
-    fi
+CMD ["node", "server.js"]
