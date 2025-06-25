@@ -35,4 +35,4 @@ USER nextjs
 EXPOSE 3000
 
 # Start the application with standalone server
-CMD ["node", "server.js"]
+CMD ["node", ".next/standalone/server.js"]
